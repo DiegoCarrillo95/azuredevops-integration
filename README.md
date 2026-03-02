@@ -195,6 +195,95 @@ python scripts/sprint_tasks.py -v 2>logs.txt
 
 ---
 
+### `pull_requests.py`
+
+> **Location:** `scripts/pull_requests.py`
+> **Type:** Read-only
+> **Description:** List pull requests across all repositories with weekly aggregations.
+
+#### Script-Specific Arguments
+
+| Argument        | Type              | Description                                                        |
+|-----------------|-------------------|--------------------------------------------------------------------|
+| `--status`      | string (multiple) | Filter: `active`, `completed`, `abandoned`, `all`. Default: `all`  |
+| `--since`       | string            | Start date (`YYYY-MM-DD`). Default: 30 days ago                   |
+| `--until`       | string            | End date (`YYYY-MM-DD`). Default: today                           |
+| `--created-by`  | string            | Filter by author name (substring, case-insensitive)               |
+| `--repository`  | string            | Filter to a specific repository name                              |
+
+#### Usage Examples
+
+```bash
+# All PRs from the last 30 days
+python scripts/pull_requests.py
+
+# Only completed PRs since January
+python scripts/pull_requests.py --status completed --since 2026-01-01
+
+# PRs by a specific person
+python scripts/pull_requests.py --created-by "John"
+
+# PRs in a specific repo
+python scripts/pull_requests.py --repository "my-repo"
+
+# Active PRs only
+python scripts/pull_requests.py --status active
+```
+
+#### Output Format
+
+```json
+{
+  "ok": true,
+  "since": "2026-02-01",
+  "until": "2026-03-02",
+  "total": 25,
+  "by_week": [
+    { "week": "2026-02-03", "opened": 5, "closed": 3 },
+    { "week": "2026-02-10", "opened": 8, "closed": 6 }
+  ],
+  "by_status": { "active": 3, "completed": 20, "abandoned": 2 },
+  "by_repository": { "repo-a": 15, "repo-b": 10 },
+  "items": [
+    {
+      "id": 42,
+      "title": "Add feature X",
+      "status": "completed",
+      "repository": "repo-a",
+      "source_branch": "feature/x",
+      "target_branch": "main",
+      "created_by": "John Smith",
+      "created_date": "2026-02-15T10:30:00Z",
+      "closed_date": "2026-02-20T14:45:00Z"
+    }
+  ]
+}
+```
+
+#### Aggregation Fields
+
+| Field           | Type         | Description                                              |
+|-----------------|--------------|----------------------------------------------------------|
+| `by_week`       | list[object] | Opened/closed counts per ISO week (Monday start)         |
+| `by_status`     | object       | PR count grouped by status                               |
+| `by_repository` | object       | PR count grouped by repository name                      |
+
+#### Item Fields
+
+| Field           | Type   | Description                                |
+|-----------------|--------|--------------------------------------------|
+| `id`            | int    | Pull request ID                            |
+| `title`         | string | PR title                                   |
+| `status`        | string | `active`, `completed`, or `abandoned`      |
+| `repository`    | string | Repository name                            |
+| `source_branch` | string | Source branch (without `refs/heads/`)      |
+| `target_branch` | string | Target branch (without `refs/heads/`)      |
+| `created_by`    | string | Author name                                |
+| `created_date`  | string | ISO datetime of creation                   |
+| `closed_date`   | string | ISO datetime of close (empty if open)      |
+
+---
+
 ## Internal Modules
 
 ### `azdo.client.AzDoClient`
@@ -218,6 +307,8 @@ Explicit parameters take priority over environment variables.
 | `get_current_iteration()`               | `dict \| None`| Return the current sprint/iteration for the team  |
 | `get_iteration_work_item_ids(id)`       | `list[int]`   | Work item IDs in an iteration                     |
 | `get_work_items_batch(ids, fields=None)`| `list[dict]`  | Work item details in batch (max 200/call)         |
+| `get_repositories()`                    | `list[dict]`  | Git repositories in the project                   |
+| `get_pull_requests(**kwargs)`           | `list[dict]`  | Pull requests across all repos (with pagination)  |
 
 #### Default Fields (`get_work_items_batch`)
 
@@ -263,5 +354,6 @@ azuredevops_integration/
 │   ├── client.py               # AzDoClient — authentication and API calls
 │   └── cli.py                  # Base parser, JSON output, logging
 └── scripts/
-    └── sprint_tasks.py         # List work items from the current sprint
+    ├── sprint_tasks.py         # List work items from the current sprint
+    └── pull_requests.py        # List pull requests with weekly aggregations
 ```
