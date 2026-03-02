@@ -284,6 +284,68 @@ python scripts/pull_requests.py --status active
 
 ---
 
+### `team_metrics.py`
+
+> **Location:** `scripts/team_metrics.py`
+> **Type:** Read-only
+> **Description:** Compute team productivity metrics from completed pull requests.
+
+#### Script-Specific Arguments
+
+| Argument   | Type   | Description                                  |
+|------------|--------|----------------------------------------------|
+| `--since`  | string | Start date (`YYYY-MM-DD`). Default: 90 days ago |
+| `--until`  | string | End date (`YYYY-MM-DD`). Default: today      |
+
+#### Usage Examples
+
+```bash
+# Last 90 days (default)
+python scripts/team_metrics.py
+
+# Specific range
+python scripts/team_metrics.py --since 2025-06-01 --until 2025-12-31
+```
+
+#### Metrics Computed
+
+| Metric | Description |
+|---|---|
+| **Cycle Time** | Median, average, and p90 hours from PR creation to merge |
+| **Throughput** | Completed PRs per author per month |
+| **Cycle Time Distribution** | Buckets: fast (<4h), normal (4-24h), slow (24-72h), very slow (>72h) |
+| **Per-Author Breakdown** | Completed count and median cycle time per author |
+
+#### Output Format
+
+```json
+{
+  "ok": true,
+  "since": "2025-12-01",
+  "until": "2026-03-02",
+  "total_completed": 80,
+  "cycle_time": {
+    "median_hours": 17.4,
+    "avg_hours": 73.8,
+    "p90_hours": 169.9
+  },
+  "throughput_per_month": [
+    { "month": "2026-02", "completed": 33, "authors": 5, "per_author": 6.6 }
+  ],
+  "cycle_time_distribution": {
+    "fast_under_4h": 146,
+    "normal_4h_to_24h": 93,
+    "slow_24h_to_72h": 65,
+    "very_slow_over_72h": 83
+  },
+  "by_author": [
+    { "author": "John Smith", "completed": 93, "median_hours": 1.1 }
+  ]
+}
+```
+
+---
+
 ## Internal Modules
 
 ### `azdo.client.AzDoClient`
@@ -355,5 +417,6 @@ azuredevops_integration/
 │   └── cli.py                  # Base parser, JSON output, logging
 └── scripts/
     ├── sprint_tasks.py         # List work items from the current sprint
-    └── pull_requests.py        # List pull requests with weekly aggregations
+    ├── pull_requests.py        # List pull requests with weekly aggregations
+    └── team_metrics.py         # Team productivity metrics from PRs
 ```
